@@ -2,6 +2,7 @@ import SwiftUI
 import CoreData
 
 struct EpicsView: View {
+    @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
@@ -38,6 +39,11 @@ struct EpicsView: View {
                         .onDelete(perform: deleteEpics)
                     }
                     .listStyle(.plain)
+                    .refreshable {
+                        await MainActor.run {
+                            viewContext.refreshAllObjects()
+                        }
+                    }
                 }
             }
             .navigationTitle("Эпики")

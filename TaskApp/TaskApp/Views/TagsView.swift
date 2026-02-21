@@ -3,6 +3,7 @@ import CoreData
 
 struct TagsView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
@@ -43,6 +44,11 @@ struct TagsView: View {
                         .onDelete(perform: deleteTags)
                     }
                     .listStyle(.plain)
+                    .refreshable {
+                        await MainActor.run {
+                            viewContext.refreshAllObjects()
+                        }
+                    }
                 }
             }
             .navigationTitle("Теги")

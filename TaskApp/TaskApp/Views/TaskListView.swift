@@ -248,6 +248,11 @@ struct TaskListView: View {
                         .id(listRefreshId)
                     }
                     .listStyle(.plain)
+                    .refreshable {
+                        await MainActor.run {
+                            viewContext.refreshAllObjects()
+                        }
+                    }
                     .onChange(of: scrollToTaskId) { _, newId in
                         guard let id = newId else { return }
                         DispatchQueue.main.async {

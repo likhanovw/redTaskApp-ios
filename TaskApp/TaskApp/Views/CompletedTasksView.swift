@@ -2,6 +2,7 @@ import SwiftUI
 import CoreData
 
 struct CompletedTasksView: View {
+    @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
@@ -71,8 +72,13 @@ struct CompletedTasksView: View {
                                     }
                                 }
                         }
-                    }
-                    .listStyle(.plain)
+                        }
+                        .listStyle(.plain)
+                        .refreshable {
+                            await MainActor.run {
+                                viewContext.refreshAllObjects()
+                            }
+                        }
                     }
                 }
                 .frame(minHeight: 1)
