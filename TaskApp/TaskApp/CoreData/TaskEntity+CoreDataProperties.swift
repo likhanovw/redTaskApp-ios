@@ -15,9 +15,15 @@ extension TaskEntity {
     @NSManaged public var createdAt: Date
     @NSManaged public var completedAt: Date?
     @NSManaged public var checklistItems: NSSet?
+    @NSManaged public var tags: NSSet?
 }
 
 extension TaskEntity: Identifiable {
+    public var tagsArray: [TagEntity] {
+        let set = tags as? Set<TagEntity> ?? []
+        return set.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     public var checklistItemsArray: [ChecklistItemEntity] {
         let set = checklistItems as? Set<ChecklistItemEntity> ?? []
         return set.sorted { $0.order < $1.order }

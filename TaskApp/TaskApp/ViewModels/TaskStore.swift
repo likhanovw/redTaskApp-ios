@@ -193,6 +193,51 @@ final class TaskStore: ObservableObject {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timer.reminder"])
     }
 
+    // MARK: - Теги
+
+    func createTag(name: String, colorIndex: Int32) -> TagEntity {
+        let tag = TagEntity(context: viewContext)
+        tag.id = UUID()
+        tag.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        tag.colorIndex = max(0, min(7, colorIndex))
+        save()
+        return tag
+    }
+
+    func deleteTag(_ tag: TagEntity) {
+        viewContext.delete(tag)
+        save()
+    }
+
+    func allTags() -> [TagEntity] {
+        let request = TagEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
+        return (try? viewContext.fetch(request)) ?? []
+    }
+
+    func addTag(_ tag: TagEntity, to task: TaskEntity) {
+        guard let taskInContext = try? viewContext.existingObject(with: task.objectID) as? TaskEntity else { return }
+        guard let tagInContext = try? viewContext.existingObject(with: tag.objectID) as? TagEntity else { return }
+        taskInContext.mutableSetValue(forKey: "tags").add(tagInContext)
+        save()
+    }
+
+    func removeTag(_ tag: TagEntity, from task: TaskEntity) {
+        guard let taskInContext = try? viewContext.existingObject(with: task.objectID) as? TaskEntity else { return }
+        guard let tagInContext = try? viewContext.existingObject(with: tag.objectID) as? TagEntity else { return }
+        taskInContext.mutableSetValue(forKey: "tags").remove(tagInContext)
+        save()
+    }
+
+    func toggleTag(_ tag: TagEntity, on task: TaskEntity) {
+        let tags = task.tagsArray
+        if tags.contains(where: { $0.id == tag.id }) {
+            removeTag(tag, from: task)
+        } else {
+            addTag(tag, to: task)
+        }
+    }
+
     private func save() {
         guard viewContext.hasChanges else { return }
         try? viewContext.save()

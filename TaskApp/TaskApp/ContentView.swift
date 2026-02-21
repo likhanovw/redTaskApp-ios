@@ -12,6 +12,9 @@ struct ContentView: View {
             CompletedTasksView()
                 .tabItem { Label("Архив", systemImage: "checkmark.circle.fill") }
                 .tag(1)
+            TagsView()
+                .tabItem { Label("Теги", systemImage: "tag") }
+                .tag(2)
         }
     }
 }

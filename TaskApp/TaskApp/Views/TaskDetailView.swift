@@ -18,6 +18,10 @@ struct TaskDetailView: View {
         taskStore.activeTimerTaskId == (cachedTaskId ?? task.id)
     }
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
+    ) private var allTags: FetchedResults<TagEntity>
+
     var body: some View {
         Form {
             Section("Задача") {
@@ -26,6 +30,34 @@ struct TaskDetailView: View {
                 TextField("Описание", text: $editableDescription, axis: .vertical)
                     .lineLimit(2...5)
                     .onSubmit { commitTitleAndDescription() }
+            }
+
+            Section("Теги") {
+                if allTags.isEmpty {
+                    Text("Создайте теги во вкладке «Теги», затем выберите их здесь.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(allTags) { tag in
+                        let isSelected = task.tagsArray.contains { $0.id == tag.id }
+                        Button {
+                            taskStore.toggleTag(tag, on: task)
+                        } label: {
+                            HStack(spacing: 12) {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(TagPalette.color(for: Int(tag.colorIndex)))
+                                    .frame(width: 24, height: 24)
+                                Text(tag.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if isSelected {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             Section("Чеклист") {

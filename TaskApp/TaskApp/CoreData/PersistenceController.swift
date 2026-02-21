@@ -10,6 +10,9 @@ final class PersistenceController {
         container = NSPersistentContainer(name: "TaskAppModel", managedObjectModel: Self.buildModel())
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
+        } else {
+            container.persistentStoreDescriptions.first?.shouldMigrateStoreAutomatically = true
+            container.persistentStoreDescriptions.first?.shouldInferMappingModelAutomatically = true
         }
         container.loadPersistentStores { _, error in
             if let error = error as NSError? {
@@ -70,6 +73,45 @@ final class PersistenceController {
 
         taskEntity.properties = [taskId, taskTitle, taskTaskDescription, taskIsCompleted, taskOrder, taskTotalTimeSpent, taskCreatedAt, taskCompletedAt]
 
+        // ——— TagEntity ———
+        let tagEntity = NSEntityDescription()
+        tagEntity.name = "TagEntity"
+        tagEntity.managedObjectClassName = NSStringFromClass(TagEntity.self)
+
+        let tagId = NSAttributeDescription()
+        tagId.name = "id"
+        tagId.attributeType = .UUIDAttributeType
+        tagId.isOptional = false
+
+        let tagName = NSAttributeDescription()
+        tagName.name = "name"
+        tagName.attributeType = .stringAttributeType
+        tagName.isOptional = false
+
+        let tagColorIndex = NSAttributeDescription()
+        tagColorIndex.name = "colorIndex"
+        tagColorIndex.attributeType = .integer32AttributeType
+        tagColorIndex.defaultValue = 0
+
+        // Связь Task ↔ Tag (многие-ко-многим)
+        let taskToTags = NSRelationshipDescription()
+        taskToTags.name = "tags"
+        taskToTags.destinationEntity = tagEntity
+        taskToTags.isOptional = true
+        taskToTags.deleteRule = .nullifyDeleteRule
+
+        let tagToTasks = NSRelationshipDescription()
+        tagToTasks.name = "tasks"
+        tagToTasks.destinationEntity = taskEntity
+        tagToTasks.isOptional = true
+        tagToTasks.deleteRule = .nullifyDeleteRule
+
+        taskToTags.inverseRelationship = tagToTasks
+        tagToTasks.inverseRelationship = taskToTags
+
+        taskEntity.properties.append(taskToTags)
+        tagEntity.properties = [tagId, tagName, tagColorIndex, tagToTasks]
+
         // ——— ChecklistItemEntity ———
         let itemEntity = NSEntityDescription()
         itemEntity.name = "ChecklistItemEntity"
@@ -114,7 +156,7 @@ final class PersistenceController {
         taskEntity.properties.append(itemsRelation)
         itemEntity.properties = [itemId, itemTitle, itemIsCompleted, itemOrder, taskRelation]
 
-        model.entities = [taskEntity, itemEntity]
+        model.entities = [taskEntity, tagEntity, itemEntity]
         return model
     }
 
