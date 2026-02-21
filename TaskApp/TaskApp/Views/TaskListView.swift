@@ -104,7 +104,7 @@ struct TaskListView: View {
                             .font(.subheadline)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(selectedEpicFilter.isAll ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                            .background(selectedEpicFilter.isAll ? Color(.systemFill) : Color(.tertiarySystemFill))
                             .foregroundStyle(selectedEpicFilter.isAll ? .primary : .secondary)
                             .clipShape(Capsule())
                     }
@@ -116,7 +116,7 @@ struct TaskListView: View {
                             .font(.subheadline)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(selectedEpicFilter.isWithoutEpic ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                            .background(selectedEpicFilter.isWithoutEpic ? Color(.systemFill) : Color(.tertiarySystemFill))
                             .foregroundStyle(selectedEpicFilter.isWithoutEpic ? .primary : .secondary)
                             .clipShape(Capsule())
                     }
@@ -130,7 +130,7 @@ struct TaskListView: View {
                                 .font(.subheadline)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(isSelected ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                                .background(isSelected ? Color(.systemFill) : Color(.tertiarySystemFill))
                                 .foregroundStyle(isSelected ? .primary : .secondary)
                                 .clipShape(Capsule())
                         }
@@ -180,7 +180,7 @@ struct TaskListView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(isSelected ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                            .background(isSelected ? Color(.systemFill) : Color(.tertiarySystemFill))
                             .foregroundStyle(isSelected ? .primary : .secondary)
                             .clipShape(Capsule())
                         }
@@ -333,7 +333,7 @@ struct TaskListView: View {
                     .background(
                         isTimerActive
                             ? Color.red.opacity(colorScheme == .dark ? 0.65 : 0.32)
-                            : (colorScheme == .dark ? Color(.secondarySystemFill) : Color.gray.opacity(0.28))
+                            : (colorScheme == .dark ? Color(.systemFill) : Color.gray.opacity(0.28))
                     )
                     .clipShape(Circle())
             }

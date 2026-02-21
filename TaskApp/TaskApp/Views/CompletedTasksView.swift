@@ -98,7 +98,7 @@ struct CompletedTasksView: View {
                         .font(.subheadline)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(selectedEpicFilter.isAll ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                        .background(selectedEpicFilter.isAll ? Color(.systemFill) : Color(.tertiarySystemFill))
                         .foregroundStyle(selectedEpicFilter.isAll ? .primary : .secondary)
                         .clipShape(Capsule())
                 }
@@ -110,7 +110,7 @@ struct CompletedTasksView: View {
                         .font(.subheadline)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(selectedEpicFilter.isWithoutEpic ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                        .background(selectedEpicFilter.isWithoutEpic ? Color(.systemFill) : Color(.tertiarySystemFill))
                         .foregroundStyle(selectedEpicFilter.isWithoutEpic ? .primary : .secondary)
                         .clipShape(Capsule())
                 }
@@ -124,7 +124,7 @@ struct CompletedTasksView: View {
                             .font(.subheadline)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(isSelected ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                            .background(isSelected ? Color(.systemFill) : Color(.tertiarySystemFill))
                             .foregroundStyle(isSelected ? .primary : .secondary)
                             .clipShape(Capsule())
                     }
