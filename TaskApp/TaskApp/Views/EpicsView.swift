@@ -62,7 +62,7 @@ struct EpicsView: View {
                 addEpicSheet
             }
             .sheet(item: $epicToEdit) { epic in
-                EditEpicSheet(epic: epic) {
+                EpicDetailSheet(epic: epic) {
                     epicToEdit = nil
                 }
                 .environmentObject(taskStore)
@@ -111,21 +111,58 @@ struct EpicsView: View {
     }
 }
 
-// MARK: - Редактирование эпика (sheet)
+// MARK: - Редактирование эпика и выбор задач (sheet)
 
-struct EditEpicSheet: View {
+struct EpicDetailSheet: View {
     let epic: EpicEntity
     let onDismiss: () -> Void
 
     @EnvironmentObject private var taskStore: TaskStore
     @State private var name: String = ""
+    /// Локальный выбор задач; сохраняется в Core Data только по «Готово».
+    @State private var selectedTaskIds: Set<UUID> = []
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \TaskEntity.order, ascending: true)],
+        predicate: NSPredicate(format: "isCompleted == NO")
+    ) private var activeTasks: FetchedResults<TaskEntity>
 
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Название эпика", text: $name)
+                Section("Название эпика") {
+                    TextField("Название", text: $name)
+                }
+                Section("Задачи в эпике") {
+                    if activeTasks.isEmpty {
+                        Text("Нет активных задач")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(activeTasks) { task in
+                            let isInEpic = selectedTaskIds.contains(task.id)
+                            Button {
+                                if selectedTaskIds.contains(task.id) {
+                                    selectedTaskIds.remove(task.id)
+                                } else {
+                                    selectedTaskIds.insert(task.id)
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text(task.title)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    if isInEpic {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            .navigationTitle("Редактировать эпик")
+            .navigationTitle("Эпик")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -142,6 +179,7 @@ struct EditEpicSheet: View {
             }
             .onAppear {
                 name = epic.name
+                selectedTaskIds = Set(activeTasks.filter { $0.epic?.id == epic.id }.map(\.id))
             }
         }
     }
@@ -150,6 +188,9 @@ struct EditEpicSheet: View {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         taskStore.updateEpic(epic, name: trimmed)
+        for task in activeTasks {
+            taskStore.setTaskEpic(task, epic: selectedTaskIds.contains(task.id) ? epic : nil)
+        }
         onDismiss()
     }
 }
