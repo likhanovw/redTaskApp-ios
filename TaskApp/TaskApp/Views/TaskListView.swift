@@ -15,7 +15,22 @@ struct TaskListView: View {
         sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
     ) private var allTags: FetchedResults<TagEntity>
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \EpicEntity.order, ascending: true), NSSortDescriptor(keyPath: \EpicEntity.name, ascending: true)]
+    ) private var allEpics: FetchedResults<EpicEntity>
+
+    enum EpicFilter: Hashable {
+        case all
+        case withoutEpic
+        case epic(UUID)
+
+        var isAll: Bool { if case .all = self { return true }; return false }
+        var isWithoutEpic: Bool { if case .withoutEpic = self { return true }; return false }
+        func isEpic(_ id: UUID) -> Bool { if case .epic(let eid) = self { return eid == id }; return false }
+    }
+
     @State private var showingAddTask = false
+    @State private var selectedEpicFilter: EpicFilter = .all
     @State private var selectedFilterTagIds: Set<UUID> = []
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
@@ -26,19 +41,27 @@ struct TaskListView: View {
     @State private var scrollToTaskId: UUID?
 
     private var filteredTasks: [TaskEntity] {
-        if selectedFilterTagIds.isEmpty {
-            return Array(tasks)
+        var result: [TaskEntity] = Array(tasks)
+        switch selectedEpicFilter {
+        case .all:
+            break
+        case .withoutEpic:
+            result = result.filter { $0.epic == nil }
+        case .epic(let epicId):
+            result = result.filter { $0.epic?.id == epicId }
         }
-        let idSet = selectedFilterTagIds
-        return tasks.filter { task in
-            idSet.isSubset(of: Set(task.tagsArray.map(\.id)))
+        if !selectedFilterTagIds.isEmpty {
+            let idSet = selectedFilterTagIds
+            result = result.filter { idSet.isSubset(of: Set($0.tagsArray.map(\.id))) }
         }
+        return result
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                filterBar
+                epicFilterBar
+                tagFilterBar
                 listContent
             }
                 .navigationTitle("Задачи")
@@ -70,7 +93,72 @@ struct TaskListView: View {
         }
     }
 
-    private var filterBar: some View {
+    private var epicFilterBar: some View {
+        HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    Button {
+                        selectedEpicFilter = .all
+                    } label: {
+                        Text("Все")
+                            .font(.subheadline)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(selectedEpicFilter.isAll ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                            .foregroundStyle(selectedEpicFilter.isAll ? .primary : .secondary)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    Button {
+                        selectedEpicFilter = .withoutEpic
+                    } label: {
+                        Text("Без эпика")
+                            .font(.subheadline)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(selectedEpicFilter.isWithoutEpic ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                            .foregroundStyle(selectedEpicFilter.isWithoutEpic ? .primary : .secondary)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    ForEach(allEpics) { epic in
+                        let isSelected = selectedEpicFilter.isEpic(epic.id)
+                        Button {
+                            selectedEpicFilter = isSelected ? .all : .epic(epic.id)
+                        } label: {
+                            Text("#\(epic.name)")
+                                .font(.subheadline)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(isSelected ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
+                                .foregroundStyle(isSelected ? .primary : .secondary)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+            }
+            if selectedEpicFilter != .all {
+                Button {
+                    selectedEpicFilter = .all
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 32, height: 32)
+                        .background(Color(.tertiarySystemFill))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 12)
+            }
+        }
+        .background(Color(.systemBackground))
+    }
+
+    private var tagFilterBar: some View {
         HStack(spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -100,7 +188,7 @@ struct TaskListView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
             }
             if !selectedFilterTagIds.isEmpty {
                 Button {
@@ -182,6 +270,11 @@ struct TaskListView: View {
 
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
+                if let epic = task.epic {
+                    Text("#\(epic.name)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 if !task.tagsArray.isEmpty {
                     HStack(spacing: 6) {
                         ForEach(task.tagsArray) { tag in

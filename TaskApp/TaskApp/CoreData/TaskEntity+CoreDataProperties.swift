@@ -16,6 +16,7 @@ extension TaskEntity {
     @NSManaged public var completedAt: Date?
     @NSManaged public var checklistItems: NSSet?
     @NSManaged public var tags: NSSet?
+    @NSManaged public var epic: EpicEntity?
 }
 
 extension TaskEntity: Identifiable {

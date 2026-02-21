@@ -112,6 +112,45 @@ final class PersistenceController {
         taskEntity.properties.append(taskToTags)
         tagEntity.properties = [tagId, tagName, tagColorIndex, tagToTasks]
 
+        // ——— EpicEntity ———
+        let epicEntity = NSEntityDescription()
+        epicEntity.name = "EpicEntity"
+        epicEntity.managedObjectClassName = NSStringFromClass(EpicEntity.self)
+
+        let epicId = NSAttributeDescription()
+        epicId.name = "id"
+        epicId.attributeType = .UUIDAttributeType
+        epicId.isOptional = false
+
+        let epicName = NSAttributeDescription()
+        epicName.name = "name"
+        epicName.attributeType = .stringAttributeType
+        epicName.isOptional = false
+
+        let epicOrder = NSAttributeDescription()
+        epicOrder.name = "order"
+        epicOrder.attributeType = .integer32AttributeType
+        epicOrder.defaultValue = 0
+
+        let taskToEpic = NSRelationshipDescription()
+        taskToEpic.name = "epic"
+        taskToEpic.destinationEntity = epicEntity
+        taskToEpic.isOptional = true
+        taskToEpic.maxCount = 1
+        taskToEpic.deleteRule = .nullifyDeleteRule
+
+        let epicToTasks = NSRelationshipDescription()
+        epicToTasks.name = "tasks"
+        epicToTasks.destinationEntity = taskEntity
+        epicToTasks.isOptional = true
+        epicToTasks.deleteRule = .nullifyDeleteRule
+
+        taskToEpic.inverseRelationship = epicToTasks
+        epicToTasks.inverseRelationship = taskToEpic
+
+        taskEntity.properties.append(taskToEpic)
+        epicEntity.properties = [epicId, epicName, epicOrder, epicToTasks]
+
         // ——— ChecklistItemEntity ———
         let itemEntity = NSEntityDescription()
         itemEntity.name = "ChecklistItemEntity"
@@ -156,7 +195,7 @@ final class PersistenceController {
         taskEntity.properties.append(itemsRelation)
         itemEntity.properties = [itemId, itemTitle, itemIsCompleted, itemOrder, taskRelation]
 
-        model.entities = [taskEntity, tagEntity, itemEntity]
+        model.entities = [taskEntity, tagEntity, epicEntity, itemEntity]
         return model
     }
 

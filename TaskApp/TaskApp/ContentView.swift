@@ -18,6 +18,10 @@ struct ContentView: View {
                 .frame(minHeight: 1)
                 .tabItem { Label("Теги", systemImage: "tag") }
                 .tag(2)
+            EpicsView()
+                .frame(minHeight: 1)
+                .tabItem { Label("Эпики", systemImage: "square.stack.3d.up") }
+                .tag(3)
         }
     }
 }

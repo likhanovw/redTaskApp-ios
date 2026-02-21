@@ -250,6 +250,45 @@ final class TaskStore: ObservableObject {
         }
     }
 
+    // MARK: - Эпики
+
+    func createEpic(name: String) -> EpicEntity {
+        let epic = EpicEntity(context: viewContext)
+        epic.id = UUID()
+        epic.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        epic.order = nextOrderForEpics()
+        save()
+        return epic
+    }
+
+    func updateEpic(_ epic: EpicEntity, name: String) {
+        epic.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        save()
+    }
+
+    func deleteEpic(_ epic: EpicEntity) {
+        viewContext.delete(epic)
+        save()
+    }
+
+    func setTaskEpic(_ task: TaskEntity, epic: EpicEntity?) {
+        guard let taskInContext = try? viewContext.existingObject(with: task.objectID) as? TaskEntity else { return }
+        if let epic = epic, let epicInContext = try? viewContext.existingObject(with: epic.objectID) as? EpicEntity {
+            taskInContext.epic = epicInContext
+        } else {
+            taskInContext.epic = nil
+        }
+        save()
+    }
+
+    private func nextOrderForEpics() -> Int32 {
+        let request = EpicEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \EpicEntity.order, ascending: false)]
+        request.fetchLimit = 1
+        guard let last = try? viewContext.fetch(request).first else { return 0 }
+        return last.order + 1
+    }
+
     func notifyDetailDismissed() {
         detailDismissedCounter += 1
     }

@@ -23,6 +23,10 @@ struct TaskDetailView: View {
         sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
     ) private var allTags: FetchedResults<TagEntity>
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \EpicEntity.order, ascending: true), NSSortDescriptor(keyPath: \EpicEntity.name, ascending: true)]
+    ) private var allEpics: FetchedResults<EpicEntity>
+
     var body: some View {
         Form {
             Section("Задача") {
@@ -31,6 +35,38 @@ struct TaskDetailView: View {
                 TextField("Описание", text: $editableDescription, axis: .vertical)
                     .lineLimit(2...5)
                     .onSubmit { commitTitleAndDescription() }
+            }
+
+            Section("Эпик") {
+                Button {
+                    taskStore.setTaskEpic(task, epic: nil)
+                } label: {
+                    HStack(spacing: 12) {
+                        Text("Без эпика")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if task.epic == nil {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        }
+                    }
+                }
+                ForEach(allEpics) { epic in
+                    let isSelected = task.epic?.id == epic.id
+                    Button {
+                        taskStore.setTaskEpic(task, epic: epic)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Text("#\(epic.name)")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            }
+                        }
+                    }
+                }
             }
 
             Section("Теги") {
