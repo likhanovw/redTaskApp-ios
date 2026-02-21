@@ -11,6 +11,8 @@ final class TaskStore: ObservableObject {
 
     @Published var activeTimerTaskId: UUID?
     @Published var currentSessionSeconds: TimeInterval = 0
+    /// Увеличивается при закрытии экрана детали задачи; список подписан и обновляет теги.
+    @Published var detailDismissedCounter: Int = 0
     private var sessionStartDate: Date?
     private var timerSubscription: AnyCancellable?
 
@@ -236,6 +238,10 @@ final class TaskStore: ObservableObject {
         } else {
             addTag(tag, to: task)
         }
+    }
+
+    func notifyDetailDismissed() {
+        detailDismissedCounter += 1
     }
 
     private func save() {

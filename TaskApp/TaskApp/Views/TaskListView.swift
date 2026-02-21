@@ -13,8 +13,7 @@ struct TaskListView: View {
     @State private var showingAddTask = false
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
-    @State private var selectedTask: TaskEntity?
-    /// При возврате с экрана детали принудительно перерисовываем строки списка (теги), т.к. @FetchRequest не обновляется при изменении только связи tags.
+    /// При возврате с экрана детали принудительно перерисовываем строки (теги), т.к. @FetchRequest не обновляется при изменении только связи tags.
     @State private var listRefreshId = 0
 
     var body: some View {
@@ -35,12 +34,12 @@ struct TaskListView: View {
                 .sheet(isPresented: $showingAddTask) {
                     addTaskSheet
                 }
-                .navigationDestination(item: $selectedTask) { task in
+                .navigationDestination(for: TaskEntity.self) { task in
                     TaskDetailView(task: task)
                 }
         }
-        .onChange(of: selectedTask) { _, new in
-            if new == nil { listRefreshId += 1 }
+        .onChange(of: taskStore.detailDismissedCounter) { _, _ in
+            listRefreshId += 1
         }
     }
 
@@ -51,11 +50,11 @@ struct TaskListView: View {
             } else {
                 List {
                     ForEach(tasks) { task in
-                        taskRow(task)
-                            .id(task.id)
-                            .contentShape(Rectangle())
-                            .onTapGesture { selectedTask = task }
-                            .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
+                        NavigationLink(value: task) {
+                            taskRow(task)
+                        }
+                        .id(task.id)
+                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 Button {
                                     withAnimation(.easeInOut(duration: 0.25)) {
@@ -132,10 +131,6 @@ struct TaskListView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
     }

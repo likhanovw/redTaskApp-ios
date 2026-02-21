@@ -88,6 +88,7 @@ struct TaskDetailView: View {
         }
         .onDisappear {
             commitTitleAndDescription()
+            taskStore.notifyDetailDismissed()
             // Таймер не останавливаем при выходе — пользователь может вернуться, время продолжает идти
         }
         .alert("Завершить задачу?", isPresented: $showingCompleteAlert) {
