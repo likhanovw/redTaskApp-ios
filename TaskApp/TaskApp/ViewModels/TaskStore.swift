@@ -201,9 +201,19 @@ final class TaskStore: ObservableObject {
         let tag = TagEntity(context: viewContext)
         tag.id = UUID()
         tag.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        tag.colorIndex = max(0, min(7, colorIndex))
+        tag.colorIndex = max(0, min(Int32(TagPalette.count - 1), colorIndex))
         save()
         return tag
+    }
+
+    func updateTag(_ tag: TagEntity, name: String?, colorIndex: Int32?) {
+        if let name = name {
+            tag.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if let colorIndex = colorIndex {
+            tag.colorIndex = max(0, min(Int32(TagPalette.count - 1), colorIndex))
+        }
+        save()
     }
 
     func deleteTag(_ tag: TagEntity) {

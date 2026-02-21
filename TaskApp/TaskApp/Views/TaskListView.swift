@@ -10,7 +10,12 @@ struct TaskListView: View {
         predicate: NSPredicate(format: "isCompleted == NO")
     ) private var tasks: FetchedResults<TaskEntity>
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
+    ) private var allTags: FetchedResults<TagEntity>
+
     @State private var showingAddTask = false
+    @State private var selectedFilterTagIds: Set<UUID> = []
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
     @State private var selectedTask: TaskEntity?
@@ -19,9 +24,22 @@ struct TaskListView: View {
     @State private var lastOpenedTaskId: UUID?
     @State private var scrollToTaskId: UUID?
 
+    private var filteredTasks: [TaskEntity] {
+        if selectedFilterTagIds.isEmpty {
+            return Array(tasks)
+        }
+        let idSet = selectedFilterTagIds
+        return tasks.filter { task in
+            idSet.isSubset(of: Set(task.tagsArray.map(\.id)))
+        }
+    }
+
     var body: some View {
         NavigationStack {
-            listContent
+            VStack(spacing: 0) {
+                filterBar
+                listContent
+            }
                 .navigationTitle("Задачи")
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
@@ -50,14 +68,64 @@ struct TaskListView: View {
         }
     }
 
+    private var filterBar: some View {
+        HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(allTags) { tag in
+                        let isSelected = selectedFilterTagIds.contains(tag.id)
+                        Button {
+                            if isSelected {
+                                selectedFilterTagIds.remove(tag.id)
+                            } else {
+                                selectedFilterTagIds.insert(tag.id)
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(TagPalette.color(for: Int(tag.colorIndex)))
+                                    .frame(width: 12, height: 12)
+                                Text(tag.name)
+                                    .font(.subheadline)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(isSelected ? Color.accentColor.opacity(0.25) : Color.gray.opacity(0.15))
+                            .foregroundStyle(isSelected ? .primary : .secondary)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+            if !selectedFilterTagIds.isEmpty {
+                Button {
+                    selectedFilterTagIds.removeAll()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 32, height: 32)
+                        .background(Color(.tertiarySystemFill))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 12)
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+    }
+
     private var listContent: some View {
         Group {
-            if tasks.isEmpty {
+            if filteredTasks.isEmpty {
                 emptyState
             } else {
                 ScrollViewReader { proxy in
                     List {
-                        ForEach(tasks) { task in
+                        ForEach(filteredTasks) { task in
                             taskRow(task)
                                 .id(task.id)
                                 .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
@@ -86,7 +154,7 @@ struct TaskListView: View {
                                     }
                                 }
                         }
-                        .onMove(perform: moveTasks)
+                        .onMove(perform: moveFilteredTasks)
                         .id(listRefreshId)
                     }
                     .listStyle(.plain)
@@ -162,7 +230,7 @@ struct TaskListView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.white)
                     .frame(width: 32, height: 32)
-                    .background(Color.gray.opacity(0.5))
+                    .background(isTimerActive ? Color.red.opacity(0.45) : Color.gray.opacity(0.5))
                     .clipShape(Circle())
             }
             .frame(width: 44, height: 44)
@@ -173,11 +241,21 @@ struct TaskListView: View {
     }
 
     private var emptyState: some View {
-        ContentUnavailableView(
-            "Нет активных задач",
-            systemImage: "tray",
-            description: Text("Нажмите + чтобы добавить задачу")
-        )
+        Group {
+            if selectedFilterTagIds.isEmpty {
+                ContentUnavailableView(
+                    "Нет активных задач",
+                    systemImage: "tray",
+                    description: Text("Нажмите + чтобы добавить задачу")
+                )
+            } else {
+                ContentUnavailableView(
+                    "Нет задач с выбранными тегами",
+                    systemImage: "tag",
+                    description: Text("Сбросьте фильтр или выберите другие теги")
+                )
+            }
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -216,8 +294,8 @@ struct TaskListView: View {
         showingAddTask = false
     }
 
-    private func moveTasks(from source: IndexSet, to destination: Int) {
-        taskStore.moveTasks(from: source, to: destination, in: Array(tasks))
+    private func moveFilteredTasks(from source: IndexSet, to destination: Int) {
+        taskStore.moveTasks(from: source, to: destination, in: filteredTasks)
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
