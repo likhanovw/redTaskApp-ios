@@ -13,8 +13,11 @@ struct TaskListView: View {
     @State private var showingAddTask = false
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
-    /// При возврате с экрана детали принудительно перерисовываем строки (теги), т.к. @FetchRequest не обновляется при изменении только связи tags.
+    @State private var selectedTask: TaskEntity?
+    /// При возврате с экрана детали принудительно перерисовываем строки (теги).
     @State private var listRefreshId = 0
+    @State private var lastOpenedTaskId: UUID?
+    @State private var scrollToTaskId: UUID?
 
     var body: some View {
         NavigationStack {
@@ -34,12 +37,16 @@ struct TaskListView: View {
                 .sheet(isPresented: $showingAddTask) {
                     addTaskSheet
                 }
-                .navigationDestination(for: TaskEntity.self) { task in
+                .navigationDestination(item: $selectedTask) { task in
                     TaskDetailView(task: task)
                 }
         }
         .onChange(of: taskStore.detailDismissedCounter) { _, _ in
             listRefreshId += 1
+            if let id = lastOpenedTaskId {
+                scrollToTaskId = id
+                lastOpenedTaskId = nil
+            }
         }
     }
 
@@ -48,37 +55,49 @@ struct TaskListView: View {
             if tasks.isEmpty {
                 emptyState
             } else {
-                List {
-                    ForEach(tasks) { task in
-                        NavigationLink(value: task) {
+                ScrollViewReader { proxy in
+                    List {
+                        ForEach(tasks) { task in
                             taskRow(task)
+                                .id(task.id)
+                                .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    lastOpenedTaskId = task.id
+                                    selectedTask = task
+                                }
+                                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                    Button {
+                                        withAnimation(.easeInOut(duration: 0.25)) {
+                                            taskStore.markTaskCompleted(task)
+                                        }
+                                    } label: {
+                                        Label("Выполнена", systemImage: "checkmark.circle.fill")
+                                    }
+                                    .tint(.green)
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        withAnimation(.easeInOut(duration: 0.25)) {
+                                            taskStore.deleteTask(task)
+                                        }
+                                    } label: {
+                                        Label("Удалить", systemImage: "trash")
+                                    }
+                                }
                         }
-                        .id(task.id)
-                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
-                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                Button {
-                                    withAnimation(.easeInOut(duration: 0.25)) {
-                                        taskStore.markTaskCompleted(task)
-                                    }
-                                } label: {
-                                    Label("Выполнена", systemImage: "checkmark.circle.fill")
-                                }
-                                .tint(.green)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    withAnimation(.easeInOut(duration: 0.25)) {
-                                        taskStore.deleteTask(task)
-                                    }
-                                } label: {
-                                    Label("Удалить", systemImage: "trash")
-                                }
-                            }
+                        .onMove(perform: moveTasks)
+                        .id(listRefreshId)
                     }
-                    .onMove(perform: moveTasks)
-                    .id(listRefreshId)
+                    .listStyle(.plain)
+                    .onChange(of: scrollToTaskId) { _, newId in
+                        guard let id = newId else { return }
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(id, anchor: .center)
+                            scrollToTaskId = nil
+                        }
+                    }
                 }
-                .listStyle(.plain)
             }
         }
         .frame(minHeight: 1)
@@ -91,7 +110,7 @@ struct TaskListView: View {
         let isTimerActive = taskStore.activeTimerTaskId == task.id
         let totalSeconds = task.totalTimeSpent + (isTimerActive ? taskStore.currentSessionSeconds : 0)
 
-        return HStack(alignment: .top, spacing: 12) {
+        return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 if !task.tagsArray.isEmpty {
                     HStack(spacing: 6) {
@@ -131,6 +150,24 @@ struct TaskListView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                if isTimerActive {
+                    taskStore.stopTimer()
+                } else {
+                    taskStore.startTimer(for: task)
+                }
+            } label: {
+                Image(systemName: isTimerActive ? "stop.fill" : "play.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white)
+                    .frame(width: 32, height: 32)
+                    .background(Color.gray.opacity(0.5))
+                    .clipShape(Circle())
+            }
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 4)
     }
