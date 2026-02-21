@@ -14,13 +14,12 @@ struct TaskListView: View {
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
     @State private var selectedTask: TaskEntity?
-    /// При возврате с экрана детали принудительно перерисовываем список, т.к. @FetchRequest не обновляется при изменении только связи tags.
+    /// При возврате с экрана детали принудительно перерисовываем строки списка (теги), т.к. @FetchRequest не обновляется при изменении только связи tags.
     @State private var listRefreshId = 0
 
     var body: some View {
         NavigationStack {
             listContent
-                .id(listRefreshId)
                 .navigationTitle("Задачи")
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
@@ -53,10 +52,9 @@ struct TaskListView: View {
                 List {
                     ForEach(tasks) { task in
                         taskRow(task)
+                            .id(task.id)
                             .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedTask = task
-                            }
+                            .onTapGesture { selectedTask = task }
                             .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 Button {
@@ -79,10 +77,12 @@ struct TaskListView: View {
                             }
                     }
                     .onMove(perform: moveTasks)
+                    .id(listRefreshId)
                 }
                 .listStyle(.plain)
             }
         }
+        .frame(minHeight: 1)
     }
 
     private func taskRow(_ task: TaskEntity) -> some View {
@@ -95,19 +95,18 @@ struct TaskListView: View {
         return HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 if !task.tagsArray.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 6) {
-                            ForEach(task.tagsArray) { tag in
-                                Text(tag.name)
-                                    .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(TagPalette.color(for: Int(tag.colorIndex)))
-                                    .foregroundStyle(.primary)
-                                    .clipShape(Capsule())
-                            }
+                    HStack(spacing: 6) {
+                        ForEach(task.tagsArray) { tag in
+                            Text(tag.name)
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(TagPalette.color(for: Int(tag.colorIndex)))
+                                .foregroundStyle(.primary)
+                                .clipShape(Capsule())
                         }
                     }
+                    .frame(height: 28)
                 }
                 Text(task.title)
                     .font(.headline)
