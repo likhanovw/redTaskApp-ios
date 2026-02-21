@@ -48,6 +48,7 @@ struct CompletedTasksView: View {
                 }
             }
             .navigationTitle("Архив")
+            .toolbarBackground(Color(.systemBackground), for: .navigationBar)
         }
     }
 

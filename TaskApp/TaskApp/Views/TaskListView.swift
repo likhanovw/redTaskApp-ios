@@ -3,6 +3,7 @@ import CoreData
 
 struct TaskListView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
@@ -52,6 +53,7 @@ struct TaskListView: View {
                         }
                     }
                 }
+                .toolbarBackground(Color(.systemBackground), for: .navigationBar)
                 .sheet(isPresented: $showingAddTask) {
                     addTaskSheet
                 }
@@ -83,14 +85,14 @@ struct TaskListView: View {
                         } label: {
                             HStack(spacing: 4) {
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(TagPalette.color(for: Int(tag.colorIndex)))
+                                    .fill(TagPalette.color(for: Int(tag.colorIndex), colorScheme: colorScheme))
                                     .frame(width: 12, height: 12)
                                 Text(tag.name)
                                     .font(.subheadline)
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(isSelected ? Color.accentColor.opacity(0.25) : Color.gray.opacity(0.15))
+                            .background(isSelected ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemFill))
                             .foregroundStyle(isSelected ? .primary : .secondary)
                             .clipShape(Capsule())
                         }
@@ -115,7 +117,7 @@ struct TaskListView: View {
                 .padding(.trailing, 12)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.systemBackground))
     }
 
     private var listContent: some View {
@@ -187,7 +189,7 @@ struct TaskListView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(TagPalette.color(for: Int(tag.colorIndex)))
+                                .background(TagPalette.color(for: Int(tag.colorIndex), colorScheme: colorScheme))
                                 .foregroundStyle(.primary)
                                 .clipShape(Capsule())
                         }
@@ -230,7 +232,11 @@ struct TaskListView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.white)
                     .frame(width: 32, height: 32)
-                    .background(isTimerActive ? Color.red.opacity(0.45) : Color.gray.opacity(0.5))
+                    .background(
+                        isTimerActive
+                            ? Color.red.opacity(colorScheme == .dark ? 0.65 : 0.32)
+                            : (colorScheme == .dark ? Color(.secondarySystemFill) : Color.gray.opacity(0.28))
+                    )
                     .clipShape(Circle())
             }
             .frame(width: 44, height: 44)

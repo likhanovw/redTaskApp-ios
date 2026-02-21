@@ -2,6 +2,7 @@ import SwiftUI
 import CoreData
 
 struct TagsView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
@@ -28,7 +29,7 @@ struct TagsView: View {
                         ForEach(tags) { tag in
                             HStack(spacing: 12) {
                                 RoundedRectangle(cornerRadius: 6)
-                                    .fill(TagPalette.color(for: Int(tag.colorIndex)))
+                                    .fill(TagPalette.color(for: Int(tag.colorIndex), colorScheme: colorScheme))
                                     .frame(width: 24, height: 24)
                                 Text(tag.name)
                                     .font(.body)
@@ -45,6 +46,7 @@ struct TagsView: View {
                 }
             }
             .navigationTitle("Теги")
+            .toolbarBackground(Color(.systemBackground), for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -80,7 +82,7 @@ struct TagsView: View {
                                 newTagColorIndex = Int32(index)
                             } label: {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(TagPalette.color(for: index))
+                                    .fill(TagPalette.color(for: index, colorScheme: colorScheme))
                                     .frame(height: 44)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
@@ -135,6 +137,7 @@ struct EditTagSheet: View {
     let tag: TagEntity
     let onDismiss: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var taskStore: TaskStore
     @State private var name: String = ""
     @State private var colorIndex: Int32 = 0
@@ -151,7 +154,7 @@ struct EditTagSheet: View {
                                 colorIndex = Int32(index)
                             } label: {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(TagPalette.color(for: index))
+                                    .fill(TagPalette.color(for: index, colorScheme: colorScheme))
                                     .frame(height: 44)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)

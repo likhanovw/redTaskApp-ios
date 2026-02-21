@@ -5,6 +5,7 @@ struct TaskDetailView: View {
     @ObservedObject var task: TaskEntity
     @EnvironmentObject private var taskStore: TaskStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var editableTitle: String = ""
     @State private var editableDescription: String = ""
@@ -45,7 +46,7 @@ struct TaskDetailView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 RoundedRectangle(cornerRadius: 6)
-                                    .fill(TagPalette.color(for: Int(tag.colorIndex)))
+                                    .fill(TagPalette.color(for: Int(tag.colorIndex), colorScheme: colorScheme))
                                     .frame(width: 24, height: 24)
                                 Text(tag.name)
                                     .foregroundStyle(.primary)
