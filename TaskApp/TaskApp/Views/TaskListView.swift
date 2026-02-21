@@ -32,6 +32,7 @@ struct TaskListView: View {
     @State private var showingAddTask = false
     @State private var selectedEpicFilter: EpicFilter = .all
     @State private var selectedFilterTagIds: Set<UUID> = []
+    @State private var filterWithoutTag = false
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
     @State private var selectedTask: TaskEntity?
@@ -50,7 +51,9 @@ struct TaskListView: View {
         case .epic(let epicId):
             result = result.filter { $0.epic?.id == epicId }
         }
-        if !selectedFilterTagIds.isEmpty {
+        if filterWithoutTag {
+            result = result.filter { $0.tagsArray.isEmpty }
+        } else if !selectedFilterTagIds.isEmpty {
             let idSet = selectedFilterTagIds
             result = result.filter { idSet.isSubset(of: Set($0.tagsArray.map(\.id))) }
         }
@@ -162,12 +165,39 @@ struct TaskListView: View {
         HStack(spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
+                    Button {
+                        filterWithoutTag = false
+                        selectedFilterTagIds.removeAll()
+                    } label: {
+                        Text("Все")
+                            .font(.subheadline)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(!filterWithoutTag && selectedFilterTagIds.isEmpty ? Color(.systemFill) : Color(.tertiarySystemFill))
+                            .foregroundStyle(!filterWithoutTag && selectedFilterTagIds.isEmpty ? .primary : .secondary)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    Button {
+                        filterWithoutTag.toggle()
+                        if filterWithoutTag { selectedFilterTagIds.removeAll() }
+                    } label: {
+                        Text("Без тега")
+                            .font(.subheadline)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(filterWithoutTag ? Color(.systemFill) : Color(.tertiarySystemFill))
+                            .foregroundStyle(filterWithoutTag ? .primary : .secondary)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                     ForEach(allTags) { tag in
                         let isSelected = selectedFilterTagIds.contains(tag.id)
                         Button {
                             if isSelected {
                                 selectedFilterTagIds.remove(tag.id)
                             } else {
+                                filterWithoutTag = false
                                 selectedFilterTagIds.insert(tag.id)
                             }
                         } label: {
@@ -190,8 +220,9 @@ struct TaskListView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 6)
             }
-            if !selectedFilterTagIds.isEmpty {
+            if filterWithoutTag || !selectedFilterTagIds.isEmpty {
                 Button {
+                    filterWithoutTag = false
                     selectedFilterTagIds.removeAll()
                 } label: {
                     Image(systemName: "xmark")
