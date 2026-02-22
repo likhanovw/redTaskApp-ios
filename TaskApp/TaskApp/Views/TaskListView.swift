@@ -30,6 +30,7 @@ struct TaskListView: View {
     }
 
     @State private var showingAddTask = false
+    @State private var searchText = ""
     @State private var selectedEpicFilter: EpicFilter = .all
     @State private var selectedFilterTagIds: Set<UUID> = []
     @State private var filterWithoutTag = false
@@ -55,6 +56,13 @@ struct TaskListView: View {
             let idSet = selectedFilterTagIds
             result = result.filter { idSet.isSubset(of: Set($0.tagsArray.map(\.id))) }
         }
+        if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            result = result.filter { task in
+                task.title.lowercased().contains(query)
+                    || (task.taskDescription?.lowercased().contains(query) ?? false)
+            }
+        }
         return result
     }
 
@@ -66,6 +74,7 @@ struct TaskListView: View {
                 listContent
             }
                 .navigationTitle("Задачи")
+                .searchable(text: $searchText, prompt: "По названию и описанию")
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         Button {
