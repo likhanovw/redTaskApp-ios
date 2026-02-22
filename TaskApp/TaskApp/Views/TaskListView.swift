@@ -38,8 +38,6 @@ struct TaskListView: View {
     @State private var selectedTask: TaskEntity?
     /// При возврате с экрана детали принудительно перерисовываем строки (теги).
     @State private var listRefreshId = 0
-    @State private var lastOpenedTaskId: UUID?
-    @State private var scrollToTaskId: UUID?
 
     private var filteredTasks: [TaskEntity] {
         var result: [TaskEntity] = Array(tasks)
@@ -89,10 +87,6 @@ struct TaskListView: View {
         }
         .onChange(of: taskStore.detailDismissedCounter) { _, _ in
             listRefreshId += 1
-            if let id = lastOpenedTaskId {
-                scrollToTaskId = id
-                lastOpenedTaskId = nil
-            }
         }
     }
 
@@ -244,15 +238,13 @@ struct TaskListView: View {
             if filteredTasks.isEmpty {
                 emptyState
             } else {
-                ScrollViewReader { proxy in
-                    List {
-                        ForEach(filteredTasks) { task in
+                List {
+                    ForEach(filteredTasks) { task in
                             taskRow(task)
                                 .id(task.id)
                                 .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    lastOpenedTaskId = task.id
                                     selectedTask = task
                                 }
                                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -284,14 +276,6 @@ struct TaskListView: View {
                             viewContext.refreshAllObjects()
                         }
                     }
-                    .onChange(of: scrollToTaskId) { _, newId in
-                        guard let id = newId else { return }
-                        DispatchQueue.main.async {
-                            proxy.scrollTo(id, anchor: .center)
-                            scrollToTaskId = nil
-                        }
-                    }
-                }
             }
         }
         .frame(minHeight: 1)
