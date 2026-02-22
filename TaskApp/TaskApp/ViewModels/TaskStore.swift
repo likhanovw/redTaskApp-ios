@@ -102,6 +102,7 @@ final class TaskStore: ObservableObject {
     func toggleChecklistItem(_ item: ChecklistItemEntity) {
         item.isCompleted.toggle()
         save()
+        item.task.objectWillChange.send()
     }
 
     /// Удаление по id и objectID задачи. Список оставшихся собираем до delete, чтобы не опираться на связь после удаления.
