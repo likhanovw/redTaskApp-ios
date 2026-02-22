@@ -7,7 +7,7 @@ struct TagsView: View {
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
+        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.order, ascending: false)]
     ) private var tags: FetchedResults<TagEntity>
 
     @State private var showingAddTag = false

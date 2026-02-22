@@ -7,12 +7,12 @@ struct TaskListView: View {
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \TaskEntity.order, ascending: true)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \TaskEntity.order, ascending: false)],
         predicate: NSPredicate(format: "isCompleted == NO")
     ) private var tasks: FetchedResults<TaskEntity>
 
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
+        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.order, ascending: false)]
     ) private var allTags: FetchedResults<TagEntity>
 
     @FetchRequest(

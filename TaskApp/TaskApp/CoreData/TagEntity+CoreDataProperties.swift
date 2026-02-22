@@ -9,6 +9,7 @@ extension TagEntity {
     @NSManaged public var id: UUID
     @NSManaged public var name: String
     @NSManaged public var colorIndex: Int32
+    @NSManaged public var order: Int32
     @NSManaged public var tasks: NSSet?
 }
 

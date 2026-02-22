@@ -202,8 +202,17 @@ final class TaskStore: ObservableObject {
         tag.id = UUID()
         tag.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         tag.colorIndex = max(0, min(Int32(TagPalette.count - 1), colorIndex))
+        tag.order = nextOrderForTags()
         save()
         return tag
+    }
+
+    private func nextOrderForTags() -> Int32 {
+        let request = TagEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \TagEntity.order, ascending: false)]
+        request.fetchLimit = 1
+        guard let last = try? viewContext.fetch(request).first else { return 0 }
+        return last.order + 1
     }
 
     func updateTag(_ tag: TagEntity, name: String?, colorIndex: Int32?) {
@@ -223,7 +232,7 @@ final class TaskStore: ObservableObject {
 
     func allTags() -> [TagEntity] {
         let request = TagEntity.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \TagEntity.order, ascending: false)]
         return (try? viewContext.fetch(request)) ?? []
     }
 

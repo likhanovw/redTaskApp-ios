@@ -29,6 +29,11 @@ struct StatisticsView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .refreshable {
+                await MainActor.run {
+                    viewContext.refreshAllObjects()
+                }
+            }
             .navigationTitle("Статистика")
             .navigationBarTitleDisplayMode(.inline)
         }

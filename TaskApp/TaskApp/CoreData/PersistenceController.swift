@@ -93,6 +93,11 @@ final class PersistenceController {
         tagColorIndex.attributeType = .integer32AttributeType
         tagColorIndex.defaultValue = 0
 
+        let tagOrder = NSAttributeDescription()
+        tagOrder.name = "order"
+        tagOrder.attributeType = .integer32AttributeType
+        tagOrder.defaultValue = 0
+
         // Связь Task ↔ Tag (многие-ко-многим)
         let taskToTags = NSRelationshipDescription()
         taskToTags.name = "tags"
@@ -110,7 +115,7 @@ final class PersistenceController {
         tagToTasks.inverseRelationship = taskToTags
 
         taskEntity.properties.append(taskToTags)
-        tagEntity.properties = [tagId, tagName, tagColorIndex, tagToTasks]
+        tagEntity.properties = [tagId, tagName, tagColorIndex, tagOrder, tagToTasks]
 
         // ——— EpicEntity ———
         let epicEntity = NSEntityDescription()

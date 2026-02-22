@@ -20,7 +20,7 @@ struct TaskDetailView: View {
     }
 
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)]
+        sortDescriptors: [NSSortDescriptor(keyPath: \TagEntity.order, ascending: false)]
     ) private var allTags: FetchedResults<TagEntity>
 
     @FetchRequest(

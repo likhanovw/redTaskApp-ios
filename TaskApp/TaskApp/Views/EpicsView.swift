@@ -6,7 +6,7 @@ struct EpicsView: View {
     @EnvironmentObject private var taskStore: TaskStore
 
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \EpicEntity.order, ascending: true), NSSortDescriptor(keyPath: \EpicEntity.name, ascending: true)]
+        sortDescriptors: [NSSortDescriptor(keyPath: \EpicEntity.order, ascending: false), NSSortDescriptor(keyPath: \EpicEntity.name, ascending: false)]
     ) private var epics: FetchedResults<EpicEntity>
 
     @State private var showingAddEpic = false
