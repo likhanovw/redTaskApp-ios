@@ -188,8 +188,16 @@ struct EpicDetailSheet: View {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         taskStore.updateEpic(epic, name: trimmed)
+        let epicId = epic.id
         for task in activeTasks {
-            taskStore.setTaskEpic(task, epic: selectedTaskIds.contains(task.id) ? epic : nil)
+            let selected = selectedTaskIds.contains(task.id)
+            let wasInThisEpic = task.epic?.id == epicId
+            if selected {
+                taskStore.setTaskEpic(task, epic: epic)
+            } else if wasInThisEpic {
+                taskStore.setTaskEpic(task, epic: nil)
+            }
+            // Иначе задача в другом эпике — не трогаем
         }
         onDismiss()
     }

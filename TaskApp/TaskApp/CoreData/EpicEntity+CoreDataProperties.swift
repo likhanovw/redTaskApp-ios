@@ -12,4 +12,9 @@ extension EpicEntity {
     @NSManaged public var tasks: NSSet?
 }
 
-extension EpicEntity: Identifiable {}
+extension EpicEntity: Identifiable {
+    public var tasksArray: [TaskEntity] {
+        let set = tasks as? Set<TaskEntity> ?? []
+        return set.sorted { $0.order < $1.order }
+    }
+}
